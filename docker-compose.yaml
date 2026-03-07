@@ -10,7 +10,9 @@ x-airflow-common:
     - ./data:/opt/airflow/data
     - ./requirements.txt:/requirements.txt
   depends_on:
-    - postgres
+    postgres:
+      condition: service_started
+
 
 services:
 
@@ -20,29 +22,37 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
-
-  # airflow-init:
-  #   <<: *airflow-common
-  #   entrypoint: /bin/bash
-  #   command: >
-  #     -c "
-  #     pip install -r /requirements.txt &&
-  #     airflow db migrate &&
-  #     airflow users create
-  #     --username airflow
-  #     --password airflow
-  #     --firstname admin
-  #     --lastname admin
-  #     --role Admin
-  #     --email admin@example.com
-  #     "
+    ports:
+      - "5432:5432"
 
   airflow-webserver:
     <<: *airflow-common
-    command: webserver
+    command: >
+      bash -c "
+      pip install -r /requirements.txt &&
+      airflow webserver
+      "
     ports:
       - "8080:8080"
 
   airflow-scheduler:
     <<: *airflow-common
-    command: scheduler
+    command: >
+      bash -c "
+      pip install -r /requirements.txt &&
+      airflow scheduler
+      "
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.3
+    container_name: mlflow-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow/mlruns
+      --host 0.0.0.0
+      --port 5000
