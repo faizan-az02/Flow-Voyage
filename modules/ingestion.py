@@ -1,20 +1,14 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.operators.empty import EmptyOperator
-from datetime import datetime
 import pandas as pd
 
+def ingest_data(**context):
 
-default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2024, 1, 1),
-    "retries": 2
-}
+    path = "/opt/airflow/data/titanic.csv"
 
+    df = pd.read_csv(path)
 
-dag = DAG(
-    dag_id="flowvoyage_mlops_pipeline",
-    default_args=default_args,
-    schedule_interval=None,
-    catchup=False
-)
+    print("Dataset shape:", df.shape)
+    print("Missing values:")
+    print(df.isnull().sum())
+
+    ti = context["ti"]
+    ti.xcom_push(key="dataset_path", value=path)

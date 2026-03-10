@@ -1,18 +1,22 @@
-x-airflow-common:
-  &airflow-common
+x-airflow-common: &airflow-common
   image: apache/airflow:2.9.2
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    MLFLOW_EXPERIMENT_NAME: flowvoyage_pipeline
+    AIRFLOW__WEBSERVER__ALLOWED_HOSTS: "*"
+    DAGBAG_IMPORT_TIMEOUT: "120"
   volumes:
     - ./dags:/opt/airflow/dags
     - ./data:/opt/airflow/data
+    - ./modules:/opt/airflow/modules
     - ./requirements.txt:/requirements.txt
+    - ./mlruns:/mlflow/mlruns
   depends_on:
     postgres:
       condition: service_started
-
 
 services:
 
@@ -25,8 +29,20 @@ services:
     ports:
       - "5432:5432"
 
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "
+      pip install -r /requirements.txt &&
+      airflow db migrate &&
+      airflow users create --username airflow --password airflow --firstname admin --lastname admin --role Admin --email admin@example.com
+      "
+
   airflow-webserver:
     <<: *airflow-common
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
     command: >
       bash -c "
       pip install -r /requirements.txt &&
@@ -37,6 +53,9 @@ services:
 
   airflow-scheduler:
     <<: *airflow-common
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
     command: >
       bash -c "
       pip install -r /requirements.txt &&
@@ -44,7 +63,7 @@ services:
       "
 
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.11.3
+    image: ghcr.io/mlflow/mlflow:v3.10.1
     container_name: mlflow-server
     ports:
       - "5000:5000"
@@ -56,3 +75,4 @@ services:
       --default-artifact-root /mlflow/mlruns
       --host 0.0.0.0
       --port 5000
+      --allowed-hosts "*"

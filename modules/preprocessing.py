@@ -4,7 +4,7 @@ import pandas as pd
 def impute_age(**context):
 
     ti = context["ti"]
-    data_path = ti.xcom_pull(key="data_path", task_ids="data_ingestion")
+    data_path = ti.xcom_pull(key="dataset_path", task_ids="data_ingestion")
 
     df = pd.read_csv(data_path)
 

@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/opt/airflow")
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator, BranchPythonOperator
 from airflow.operators.empty import EmptyOperator
@@ -84,8 +87,6 @@ with DAG(
     end = EmptyOperator(task_id="end")
 
 
-    start >> ingest >> validate
-    validate >> [age, embarked]
-    [age, embarked] >> encode >> train >> evaluate >> branch
+    start >> ingest >> validate >> age >> embarked >> encode >> train >> evaluate >> branch
     branch >> register >> end
     branch >> reject >> end
