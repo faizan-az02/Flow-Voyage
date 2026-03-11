@@ -10,13 +10,22 @@ def impute_age(**context):
 
     df["Age"].fillna(df["Age"].median(), inplace=True)
 
-    df.to_csv("/opt/airflow/data/processed.csv", index=False)
+    ti.xcom_push(
+        key="Age_imputed",
+        value=df["Age"].to_json(orient="split"),
+    )
 
 
 def impute_embarked(**context):
 
-    df = pd.read_csv("/opt/airflow/data/processed.csv")
+    ti = context["ti"]
+    data_path = ti.xcom_pull(key="dataset_path", task_ids="data_ingestion")
+
+    df = pd.read_csv(data_path)
 
     df["Embarked"].fillna(df["Embarked"].mode()[0], inplace=True)
 
-    df.to_csv("/opt/airflow/data/processed.csv", index=False)
+    ti.xcom_push(
+        key="Embarked_imputed",
+        value=df["Embarked"].to_json(orient="split"),
+    )

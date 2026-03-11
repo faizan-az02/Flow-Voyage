@@ -26,11 +26,13 @@ def train_model(**context):
         random_state=42
     )
 
-    C_value = 1.0
+    C_value = 10
+
+    iterations = 200
 
     model = LogisticRegression(
         C=C_value,
-        max_iter=200
+        max_iter=iterations
     )
 
     with mlflow.start_run() as run:
@@ -42,6 +44,7 @@ def train_model(**context):
         mlflow.log_param("model_type", "LogisticRegression")
         mlflow.log_param("C", C_value)
         mlflow.log_param("dataset_size", len(df))
+        mlflow.log_param("iterations", iterations)
 
         mlflow.log_metric("accuracy", accuracy)
 

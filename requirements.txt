@@ -1,5 +1,5 @@
-pandas
-numpy
-scikit-learn
-mlflow
-psycopg2-binary
+pandas==2.2.3
+numpy==2.2.2
+scikit-learn==1.8.0
+mlflow==3.10.1
+psycopg2-binary==2.9.10

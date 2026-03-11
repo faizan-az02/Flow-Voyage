@@ -87,6 +87,7 @@ with DAG(
     end = EmptyOperator(task_id="end")
 
 
-    start >> ingest >> validate >> age >> embarked >> encode >> train >> evaluate >> branch
+    start >> ingest >> validate >> [age, embarked] 
+    [age, embarked] >> encode >> train >> evaluate >> branch
     branch >> register >> end
     branch >> reject >> end
